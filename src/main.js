@@ -6,6 +6,8 @@ let ctx = canvas.getContext("2d");
 ctx.strokeStyle = "none";
 var lineWidth = 5;
 ctx.lineCap = "round";
+let l = 0; // arr.length,
+let machine;
 
 let paintingColor = "black"; // 画笔颜色
 let painting = false;
@@ -108,34 +110,69 @@ strong.onclick = () => {
   strong.classList.add("active");
   lineWidth = eraserEnabled ? 15 : 10;
 };
+if (is_touch_device()) {
+  machine = "phone";
+  canvas.ontouchstart = (e) => {
+    dataArr.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); //在这里储存绘图
+    painting = true;
+    arr = arr1 = [e.touches[0].clientX, e.touches[0].clientY];
+    // 起点
+  };
+  canvas.ontouchmove = (e) => {
+    if (painting) {
+      arr.push(getPoint(e));
+      arr2 = [getPoint(e)];
+      l = arr.length;
+      ctx.fillStyle = ctx.strokeStyle = eraserEnabled ? "white" : paintingColor;
+      if (l > 3) {
+        ctr = arr[l - 2];
+        creatLine(arr1, ctr, arr2);
+        arr1 = arr2;
+      }
+    }
+  };
+} else {
+  machine = "PC";
+  canvas.onmousedown = (e) => {
+    arr = arr1 = getPoint(e);
+    painting = true;
+  };
 
-canvas.onmousedown = (e) => {
-  arr = arr1 = getPoint(e);
-  painting = true;
-};
+  canvas.onmouseup = (e) => {
+    painting = false;
+    dataArr.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  };
 
-canvas.onmouseup = (e) => {
-  painting = false;
-  dataArr.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-};
+  canvas.onmousemove = (e) => {
+    if (!painting) {
+      return;
+    }
+    arr.push(getPoint(e));
+    arr2 = getPoint(e);
+    l = arr.length;
+    ctx.fillStyle = ctx.strokeStyle = eraserEnabled ? "white" : paintingColor;
+    if (l > 3) {
+      ctr = arr[l - 2];
+      creatLine(arr1, ctr, arr2);
+      arr1 = arr2;
+    }
+  };
+}
 
-canvas.onmousemove = (e) => {
-  if (!painting) {
-    return;
+// 检测设备
+function is_touch_device() {
+  try {
+    document.createEvent("TouchEvent");
+    return true;
+  } catch (e) {
+    return false;
   }
-  arr.push([e.x, e.y]);
-  arr2 = [e.x, e.y];
-  let l = arr.length;
-  ctx.fillStyle = ctx.strokeStyle = eraserEnabled ? "white" : paintingColor;
-  if (l > 3) {
-    ctr = arr[l - 2];
-    creatLine(arr1, ctr, arr2);
-    arr1 = arr2;
-  }
-};
+}
 
 function getPoint(e) {
-  return [e.clientX, e.clientY];
+  return machine === "phone"
+    ? [e.touches[0].clientX, e.touches[0].clientY]
+    : [e.clientX, e.clientY];
 }
 
 function creatLine(pot1, ctr, pot2) {
