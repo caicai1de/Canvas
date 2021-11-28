@@ -113,15 +113,14 @@ strong.onclick = () => {
 if (is_touch_device()) {
   machine = "phone";
   canvas.ontouchstart = (e) => {
-    dataArr.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); //在这里储存绘图
     painting = true;
-    arr = arr1 = [e.touches[0].clientX, e.touches[0].clientY];
+    arr = arr1 = getPoint(e);
     // 起点
   };
   canvas.ontouchmove = (e) => {
     if (painting) {
       arr.push(getPoint(e));
-      arr2 = [getPoint(e)];
+      arr2 = getPoint(e);
       l = arr.length;
       ctx.fillStyle = ctx.strokeStyle = eraserEnabled ? "white" : paintingColor;
       if (l > 3) {
@@ -130,6 +129,10 @@ if (is_touch_device()) {
         arr1 = arr2;
       }
     }
+  };
+  canvas.ontouchend = (e) => {
+    painting = false;
+    dataArr.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
   };
 } else {
   machine = "PC";
